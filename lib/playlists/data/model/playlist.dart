@@ -8,7 +8,14 @@ part 'playlist.g.dart';
 @JsonSerializable()
 @HiveType(typeId: 0)
 class Playlist extends Equatable {
-  const Playlist(this.id, this.name, this.products, this.createdAt);
+  const Playlist(
+    this.id,
+    this.name,
+    this.products,
+    this.createdAt, {
+    this.skipIntros = false,
+    this.sleepMode = false,
+  });
 
   @HiveField(0)
   final String id;
@@ -19,6 +26,18 @@ class Playlist extends Equatable {
   final List<Product> products;
   @HiveField(3)
   final DateTime? createdAt;
+
+  /// Playlist-level Skip Intros setting. Persisted locally (Hive) only — never
+  /// sent to or read from the server.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @HiveField(4, defaultValue: false)
+  final bool skipIntros;
+
+  /// Playlist-level Sleep Mode setting. Persisted locally (Hive) only — never
+  /// sent to or read from the server.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @HiveField(5, defaultValue: false)
+  final bool sleepMode;
 
   factory Playlist.mocked() => Playlist(
       'id', 'name', [Product.mocked('Example audio 1')], DateTime.now());
@@ -36,15 +55,20 @@ class Playlist extends Equatable {
     String? name,
     List<Product>? products,
     DateTime? createdAt,
+    bool? skipIntros,
+    bool? sleepMode,
   }) {
     return Playlist(
       id ?? this.id,
       name ?? this.name,
       products ?? this.products,
       createdAt ?? this.createdAt,
+      skipIntros: skipIntros ?? this.skipIntros,
+      sleepMode: sleepMode ?? this.sleepMode,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, products, createdAt];
+  List<Object?> get props =>
+      [id, name, products, createdAt, skipIntros, sleepMode];
 }

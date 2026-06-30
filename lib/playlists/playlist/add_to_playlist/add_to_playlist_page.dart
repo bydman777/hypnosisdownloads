@@ -43,11 +43,14 @@ class _AddToPlaylistPageState extends State<AddToPlaylistPage> {
         BlocListener<AddToPlaylistCubit, AddToPlaylistState>(
           listener: (context, state) {
             if (state is AddToPlaylistFailure) {
+              final message = state.errorMessage.isNotEmpty
+                  ? state.errorMessage
+                  : 'Failed to add to playlist';
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
                 ..showSnackBar(
-                  const SnackBar(
-                    content: Text('Failed to add to playlist'),
+                  SnackBar(
+                    content: Text(message),
                   ),
                 );
             }

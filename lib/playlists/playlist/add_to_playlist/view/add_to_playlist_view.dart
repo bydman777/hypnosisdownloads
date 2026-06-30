@@ -191,15 +191,22 @@ class _AddToPlaylistListViewItemState extends State<AddToPlaylistListViewItem> {
                               absorbing: isAlreadyAdded,
                               child: DefaultIconButton(
                                 SvgPicture.asset(IconsOutlined.add),
-                                onTap: () {
-                                  context
-                                      .read<AddToPlaylistCubit>()
-                                      .addToPlaylist(
-                                        widget.audio,
-                                        playlist,
-                                      );
-
-                                  context.read<PlaylistsCubit>().onPageOpened();
+                                onTap: () async {
+                                  final addCubit =
+                                      context.read<AddToPlaylistCubit>();
+                                  final playlistsCubit =
+                                      context.read<PlaylistsCubit>();
+                                  // Wait for the add to finish before
+                                  // refreshing the playlists list. Firing
+                                  // both at once means the refresh can
+                                  // race the add and resolve the playlist
+                                  // against a stale audios box, dropping
+                                  // the just-added entry.
+                                  await addCubit.addToPlaylist(
+                                    widget.audio,
+                                    playlist,
+                                  );
+                                  await playlistsCubit.onPageOpened();
                                 },
                               ),
                             );

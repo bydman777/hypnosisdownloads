@@ -46,6 +46,18 @@ class PlaylistsRepository {
 
       List<Playlist> playlists = [];
 
+      // Preserve locally-stored, server-less toggles (skipIntros / sleepMode)
+      // across a server refresh, keyed by playlist id. The server never returns
+      // these, so without this merge the returned list (and therefore the UI)
+      // would always reset them to false.
+      final existingToggles = {
+        for (final playlist in playlistsBox.values)
+          playlist.id: (
+            skipIntros: playlist.skipIntros,
+            sleepMode: playlist.sleepMode,
+          ),
+      };
+
       final playlistsResponse =
           jsonDecode(response.data)['lists'] as List<dynamic>;
 
@@ -61,7 +73,17 @@ class PlaylistsRepository {
           products.sort((a, b) => b.orderTime.compareTo(a.orderTime));
           playlistJson['products'] =
               products.map((product) => product.toJson()).toList();
-          playlists.add(Playlist.fromJson(playlistJson));
+
+          final playlist = Playlist.fromJson(playlistJson);
+          final toggles = existingToggles[playlist.id];
+          playlists.add(
+            toggles == null
+                ? playlist
+                : playlist.copyWith(
+                    skipIntros: toggles.skipIntros,
+                    sleepMode: toggles.sleepMode,
+                  ),
+          );
         }
       }
 
@@ -199,11 +221,30 @@ class PlaylistsRepository {
   Future<void> writePlaylistsToBox(List<Playlist> playlists) async {
     final box = playlistsBox;
 
+    // Preserve locally-stored, server-less toggles (skipIntros / sleepMode)
+    // across a server refresh, keyed by playlist id.
+    final existingToggles = {
+      for (final playlist in box.values)
+        playlist.id: (
+          skipIntros: playlist.skipIntros,
+          sleepMode: playlist.sleepMode,
+        ),
+    };
+
     playlistsBox.clear();
 
     try {
       for (final playlist in playlists) {
-        await box.put(playlist.id, playlist);
+        final toggles = existingToggles[playlist.id];
+        await box.put(
+          playlist.id,
+          toggles == null
+              ? playlist
+              : playlist.copyWith(
+                  skipIntros: toggles.skipIntros,
+                  sleepMode: toggles.sleepMode,
+                ),
+        );
       }
     } catch (e) {
       debugPrint('Error writing playlists to box: $e');
@@ -222,6 +263,20 @@ class PlaylistsRepository {
 
   Future<Playlist> addToPlaylist(Product audio, Playlist playlist) async {
     try {
+      // Guard: the backend addresses a track inside a playlist by its
+      // per-account `plrefid` (mapped to `Product.idInPlaylist`). For some
+      // entries in a user's library this field is missing/null — e.g. titles
+      // that have no playlist-reference id allocated for that account. Posting
+      // `entries: '["null"]'` returns error == 0 from the server, so the cubit
+      // would otherwise emit success even though nothing was persisted, which
+      // is exactly the "added successfully but never shows up" symptom
+      // reported by customers on Samsung A25 / One UI 8.5.
+      if (audio.idInPlaylist == null || audio.idInPlaylist!.isEmpty) {
+        throw Exception(
+          "This track can't be added to a playlist. Please contact support.",
+        );
+      }
+
       final user = currentUserRepository.currentUser;
       final addToPlaylistFormData = FormData.fromMap(
         {
@@ -245,14 +300,33 @@ class PlaylistsRepository {
 
       debugPrint("addToPlaylist response: $response");
 
-      final responseErrorCode = jsonDecode(response.data)['error'];
+      final decoded = jsonDecode(response.data);
+      final responseErrorCode = decoded['error'];
+      // error == 6 is the backend's "entry already in playlist" code and is
+      // treated as success below.
       if (responseErrorCode > 0 && responseErrorCode != 6) {
-        throw Exception(jsonDecode(response.data)['errorstr']);
+        throw Exception(decoded['errorstr']);
       } else if (responseErrorCode < 0) {
         throw Exception(responseErrorCode);
       }
 
-      final updatedPlaylist = _parsePlaylistFrom(response);
+      final updatedPlaylist = await _parsePlaylistFrom(response);
+
+      // Verify the server actually persisted the entry. If the response's
+      // entries list doesn't reference this audio (and we weren't told the
+      // entry was already present), the add silently failed server-side and
+      // we must surface that to the user instead of showing a fake success.
+      final entries =
+          (decoded['entries'] as List<dynamic>?)?.map((e) => e.toString()) ??
+              const <String>[];
+      final persisted = entries.contains(audio.idInPlaylist) ||
+          updatedPlaylist.products.any((p) => p.id == audio.id);
+      if (responseErrorCode != 6 && !persisted) {
+        throw Exception(
+          "We couldn't add that track to your playlist. Please try again.",
+        );
+      }
+
       return updatedPlaylist;
     } catch (e) {
       return Future.error(e);

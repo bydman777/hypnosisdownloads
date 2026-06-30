@@ -210,6 +210,34 @@ class AudioPlayerControllerWidget extends InheritedWidget {
     return await _audioPlayer.stop();
   }
 
+  /// Current playback volume (0.0 - 1.0).
+  double get volume => _audioPlayer.volume;
+
+  /// Set the playback volume (0.0 - 1.0).
+  Future<void> setVolume(double volume) async {
+    return _audioPlayer.setVolume(volume.clamp(0.0, 1.0));
+  }
+
+  /// Gradually fades the volume to zero over [duration], then pauses playback
+  /// and restores the volume to 1.0 (so the next session is not silent).
+  ///
+  /// Used by Sleep Mode to stop gently at the Reorientation point.
+  Future<void> fadeOutAndPause({
+    Duration duration = const Duration(seconds: 3),
+  }) async {
+    const steps = 15;
+    final startVolume = _audioPlayer.volume;
+    final stepDuration = Duration(
+      milliseconds: (duration.inMilliseconds / steps).round(),
+    );
+    for (var step = steps - 1; step >= 0; step--) {
+      await _audioPlayer.setVolume(startVolume * step / steps);
+      await Future<void>.delayed(stepDuration);
+    }
+    await _audioPlayer.pause();
+    await _audioPlayer.setVolume(1);
+  }
+
   Future<void> seek(Duration duration) async {
     if (_audioSource != null && _currentIndex != null) {
       final currentAudio = await _audioSource!.getProductAt(_currentIndex!);
@@ -392,7 +420,10 @@ class AudioPlayerControllerWidget extends InheritedWidget {
     currentIndexController.add(_currentIndex);
     audioSourceController.add(_audioSource);
 
-    await audioPlayer.setAudioSource(currentAudioSource);
+    await audioPlayer.setAudioSource(
+      currentAudioSource,
+      initialIndex: _currentIndex,
+    );
     try {
       debugPrint('[tagx] Seeking to Duration.zero with index: $_currentIndex');
       await audioPlayer.seek(Duration.zero, index: _currentIndex);

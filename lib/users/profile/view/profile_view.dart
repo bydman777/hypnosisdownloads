@@ -78,7 +78,7 @@ class ProfileView extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              "©2024 Uncommon Knowledge Ltd, Boswell House, Argyll Square, Oban, UK PA34 4BD. Registered Company 03573107",
+              "© 2026 Uncommon Knowledge Ltd, 2nd Floor, Preston Park House, South Road, Brighton, BN1 6SB. Registered Company 03573107",
               style: TextStyle(
                 fontSize: 10,
                 color: ComponentColors.hintTextColor,

@@ -4,6 +4,7 @@ import 'package:hypnosis_downloads/app/home/page_index_provider.dart';
 import 'package:hypnosis_downloads/app/home/routes/listen_routes.dart';
 import 'package:hypnosis_downloads/app/home/routes/navigation_service.dart';
 import 'package:hypnosis_downloads/app/view/common/assets.dart';
+import 'package:hypnosis_downloads/app/view/common/colors.dart';
 import 'package:hypnosis_downloads/app/view/components/play_button.dart';
 import 'package:hypnosis_downloads/app/view/components/text/body_medium_text.dart';
 import 'package:hypnosis_downloads/audio_player/audio_player_controller_widget_extension.dart';
@@ -53,7 +54,7 @@ class HypnosisMiniAudioPlayer extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              color: const Color(0xFF45AE9E),
+              color: ComponentColors.primaryColor,
             ),
             child: Column(
               children: [

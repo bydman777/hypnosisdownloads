@@ -57,7 +57,7 @@ class AudioListViewItem extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text(
-                                'Please go online to play or download audio'),
+                                'Only downloaded titles can be played while offline.'),
                           ),
                         );
                       }

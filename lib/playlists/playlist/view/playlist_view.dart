@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hypnosis_downloads/app/connectivity_status/logic/connectivity_status_cubit.dart';
 import 'package:hypnosis_downloads/app/home/routes/navigation_service.dart';
 import 'package:hypnosis_downloads/app/view/common/assets.dart';
 import 'package:hypnosis_downloads/app/view/common/colors.dart';
@@ -17,6 +18,7 @@ import 'package:hypnosis_downloads/audio_player/audio_player_controller_widget_e
 import 'package:hypnosis_downloads/playlists/data/model/playlist.dart';
 import 'package:hypnosis_downloads/playlists/playlist/add_to_playlist/add_to_playlist_page.dart';
 import 'package:hypnosis_downloads/playlists/playlist/common/remove_from_playlist/cubit/remove_from_playlist_cubit.dart';
+import 'package:hypnosis_downloads/playlists/playlist/view/components/playlist_toggles.dart';
 import 'package:hypnosis_downloads/products/audios/download/logic/downloadable_products_cubit.dart';
 import 'package:hypnosis_downloads/products/view/products_list_view.dart';
 import 'package:just_audio/just_audio.dart';
@@ -116,7 +118,9 @@ class _NonEmptyPlaylistViewState extends State<NonEmptyPlaylistView> {
                   ),
                   const SizedBox(height: 12),
                   _renderPlayButton(context),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
+                  PlaylistToggles(playlist: widget.playlist),
+                  const SizedBox(height: 8),
                   ProductsListView(
                     pack: null,
                     playlist: widget.playlist,
@@ -178,12 +182,46 @@ class _NonEmptyPlaylistViewState extends State<NonEmptyPlaylistView> {
                 await context.hypnosisAudioPlayer.play();
               }
             } else {
+              if (!await _ensureFirstTrackPlayableOffline(context)) {
+                return;
+              }
               await _setCurrentPlaylist();
             }
           },
         );
       },
     );
+  }
+
+  /// Returns false (after showing a snackbar) if we are offline and the first
+  /// track in the playlist hasn't been downloaded — in that case playback
+  /// would silently stall at 0:00, so we abort instead.
+  Future<bool> _ensureFirstTrackPlayableOffline(BuildContext context) async {
+    final isOnline =
+        context.read<ConnectivityStatusCubit>().state is ConnectivityStatusOnline;
+    if (isOnline) return true;
+
+    final firstAudio = widget.playlist.products.isNotEmpty
+        ? widget.playlist.products.first
+        : null;
+    if (firstAudio == null) return true;
+
+    final downloadable = await context
+        .read<DownloadableProductsCubit>()
+        .getDownloadStatusForSingle(firstAudio);
+    final isDownloaded =
+        downloadable.status == DownloadTaskStatus.complete.index;
+    if (!isDownloaded) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Only downloaded titles can be played while offline.'),
+        ),
+      );
+      return false;
+    }
+    return true;
   }
 
   Future<void> _setCurrentPlaylist() async {

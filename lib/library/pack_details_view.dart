@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:hypnosis_downloads/app/connectivity_status/logic/connectivity_status_cubit.dart';
 import 'package:hypnosis_downloads/app/home/routes/navigation_service.dart';
 import 'package:hypnosis_downloads/app/view/components/app_cover.dart';
 import 'package:hypnosis_downloads/app/view/components/custom_loader_overlay.dart';
@@ -113,6 +114,9 @@ class _PackDetailsViewState extends State<PackDetailsView> {
                           await context.hypnosisAudioPlayer.play();
                         }
                       } else {
+                        if (!await _ensureFirstTrackPlayableOffline(context)) {
+                          return;
+                        }
                         await _setCurrentPlaylist();
                       }
 
@@ -131,6 +135,37 @@ class _PackDetailsViewState extends State<PackDetailsView> {
         ),
       ),
     );
+  }
+
+  /// Returns false (after showing a snackbar) if we are offline and the first
+  /// track in the pack hasn't been downloaded — in that case playback would
+  /// silently stall at 0:00, so we abort instead.
+  Future<bool> _ensureFirstTrackPlayableOffline(BuildContext context) async {
+    final isOnline =
+        context.read<ConnectivityStatusCubit>().state is ConnectivityStatusOnline;
+    if (isOnline) return true;
+
+    final firstAudio = widget.packDetails.products.isNotEmpty
+        ? widget.packDetails.products.first
+        : null;
+    if (firstAudio == null) return true;
+
+    final downloadable = await context
+        .read<DownloadableProductsCubit>()
+        .getDownloadStatusForSingle(firstAudio);
+    final isDownloaded =
+        downloadable.status == DownloadTaskStatus.complete.index;
+    if (!isDownloaded) {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Only downloaded titles can be played while offline.'),
+        ),
+      );
+      return false;
+    }
+    return true;
   }
 
   Future<void> _setCurrentPlaylist() async {

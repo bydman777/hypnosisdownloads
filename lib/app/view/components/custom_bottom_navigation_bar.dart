@@ -76,26 +76,34 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
             children: List<Widget>.generate(
               widget.items.length,
               (index) => GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
                   widget.onTap?.call(index);
                 },
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SvgPicture.asset(
-                      widget.items[index].icon,
-                      color: index == value ? widget.activeColor : widget.color,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.items[index].label,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: index == value
-                                ? widget.activeColor
-                                : widget.color,
-                          ),
-                    ),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 2,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        widget.items[index].icon,
+                        color:
+                            index == value ? widget.activeColor : widget.color,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.items[index].label,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: index == value
+                                  ? widget.activeColor
+                                  : widget.color,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

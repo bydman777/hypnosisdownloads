@@ -81,6 +81,11 @@ dev_dependencies:
   json_serializable: ^6.6.2
   hive_generator: ^2.0.0
 
+# Fixes TestFlight/App Store warning: missing dSYM for objective_c.framework
+# https://github.com/dart-lang/native/issues/3290 (fixed in objective_c 9.4.0+)
+dependency_overrides:
+  objective_c: 9.4.1
+
 flutter:
   uses-material-design: true
 

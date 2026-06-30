@@ -92,3 +92,4 @@ class _AudioPlayerWrapperState extends State<AudioPlayerWrapper> with AutomaticK
     );
   }
 }
+

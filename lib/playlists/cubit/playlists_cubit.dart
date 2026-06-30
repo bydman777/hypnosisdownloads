@@ -37,6 +37,23 @@ class PlaylistsCubit extends Cubit<PlaylistsState> {
     }
   }
 
+  /// Persists the playlist-level [skipIntros] / [sleepMode] toggles locally
+  /// (Hive only — these are never synced to the server) and returns the
+  /// updated playlist. Does not emit a new state: the toggles are owned by the
+  /// playlist view's local state.
+  Future<Playlist> updateToggles(
+    Playlist playlist, {
+    bool? skipIntros,
+    bool? sleepMode,
+  }) async {
+    final updated = playlist.copyWith(
+      skipIntros: skipIntros,
+      sleepMode: sleepMode,
+    );
+    await playlistsRepository.writePlaylistToBox(updated);
+    return updated;
+  }
+
   Future<void> delete(Playlist playlist) async {
     emit(const PlaylistDeleteInProgress());
     try {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hypnosis_downloads/app/view/common/gradients.dart';
 import 'package:hypnosis_downloads/app/view/components/custom_app_bar.dart';
 import 'package:hypnosis_downloads/app/view/components/search_text_form_field.dart';
@@ -48,11 +49,16 @@ class _SessionsAppBarState extends State<SessionsAppBar> {
                   textAlign: TextAlign.start,
                 ),
                 const SizedBox(height: 8),
-                SearchTextFormField(
-                  controller: controller,
-                  onChanged: (value) =>
-                      context.read<ProductSearchBloc>().changeFilter(value),
-                  onClear: () => context.read<ProductSearchBloc>().clear(),
+                BlocListener<ProductSearchBloc, ProductSearchState>(
+                  listenWhen: (previous, current) =>
+                      previous.filter.isNotEmpty && current.filter.isEmpty,
+                  listener: (context, state) => controller.clear(),
+                  child: SearchTextFormField(
+                    controller: controller,
+                    onChanged: (value) =>
+                        context.read<ProductSearchBloc>().changeFilter(value),
+                    onClear: () => context.read<ProductSearchBloc>().clear(),
+                  ),
                 ),
               ],
             ),

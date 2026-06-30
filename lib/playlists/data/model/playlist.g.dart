@@ -21,13 +21,15 @@ class PlaylistAdapter extends TypeAdapter<Playlist> {
       fields[1] as String,
       (fields[2] as List).cast<Product>(),
       fields[3] as DateTime?,
+      skipIntros: fields[4] == null ? false : fields[4] as bool,
+      sleepMode: fields[5] == null ? false : fields[5] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Playlist obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -35,7 +37,11 @@ class PlaylistAdapter extends TypeAdapter<Playlist> {
       ..writeByte(2)
       ..write(obj.products)
       ..writeByte(3)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(4)
+      ..write(obj.skipIntros)
+      ..writeByte(5)
+      ..write(obj.sleepMode);
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hypnosis_downloads/app/connectivity_status/logic/connectivity_status_cubit.dart';
 import 'package:hypnosis_downloads/app/home/routes/navigation_service.dart';
 import 'package:hypnosis_downloads/app/view/common/assets.dart';
 import 'package:hypnosis_downloads/app/view/common/colors.dart';
@@ -12,6 +13,8 @@ import 'package:hypnosis_downloads/app/view/widgets/default_icon_button.dart';
 import 'package:hypnosis_downloads/audio_player/audio_player_controller_widget_extension.dart';
 import 'package:hypnosis_downloads/playlists/data/model/playlist.dart';
 import 'package:hypnosis_downloads/products/audios/download/logic/downloadable_products_cubit.dart';
+import 'package:hypnosis_downloads/products/audios/player/view/components/skip_intro_button.dart';
+import 'package:hypnosis_downloads/products/audios/player/view/components/sleep_mode_toggle.dart';
 import 'package:hypnosis_downloads/library/data/model/product.dart';
 import 'package:hypnosis_downloads/library/data/model/product_pack.dart';
 import 'package:just_audio/just_audio.dart';
@@ -41,6 +44,31 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       final currentAudio = context.hypnosisAudioPlayer.currentAudio;
       final widgetAudio = widget.audio;
       if (currentAudio?.id != widgetAudio.id) {
+        // If we are offline and the target track isn't downloaded, don't
+        // pretend to play it — show a clear message instead of leaving the
+        // player stuck at 0:00.
+        final isOnline = context.read<ConnectivityStatusCubit>().state
+            is ConnectivityStatusOnline;
+        if (!isOnline) {
+          final downloadable = await context
+              .read<DownloadableProductsCubit>()
+              .getDownloadStatusForSingle(widgetAudio);
+          final isDownloaded =
+              downloadable.status == DownloadTaskStatus.complete.index;
+          if (!isDownloaded) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Only downloaded titles can be played while offline.'),
+              ),
+            );
+            setState(() {
+              loading = false;
+            });
+            return;
+          }
+        }
         await context.hypnosisAudioPlayer.stop();
 
         setState(() {
@@ -97,10 +125,13 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           audio: widget.audio,
           loading: loading,
         ),
+        SkipIntroButton(audio: widget.audio),
         const SizedBox(height: 32),
         AudioPlayerActions(
           audio: widget.audio,
         ),
+        const SizedBox(height: 16),
+        SleepModeToggle(audio: widget.audio),
       ],
     );
   }

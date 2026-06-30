@@ -21,6 +21,7 @@ import 'package:hypnosis_downloads/playlists/cubit/playlists_cubit.dart';
 import 'package:hypnosis_downloads/playlists/playlist/add_to_playlist/cubit/cubit/add_to_playlist_cubit.dart';
 import 'package:hypnosis_downloads/playlists/playlist/common/remove_from_playlist/cubit/remove_from_playlist_cubit.dart';
 import 'package:hypnosis_downloads/products/audios/player/view/components/hypnosis_mini_audio_player.dart';
+import 'package:hypnosis_downloads/search/product_search/product_search_bloc.dart';
 import 'package:hypnosis_downloads/users/profile/profile_page.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 import 'package:provider/provider.dart';
@@ -183,6 +184,9 @@ class _HomePageState extends State<HomePage> {
           ),
           bottomNavigationBar: CustomBottomNavigationBar(
             onTap: (index) {
+              if (index == 0) {
+                context.read<ProductSearchBloc>().clear();
+              }
               Provider.of<PageIndexProvider>(context, listen: false)
                   .setActiveIndex(activeIndex: index);
             },

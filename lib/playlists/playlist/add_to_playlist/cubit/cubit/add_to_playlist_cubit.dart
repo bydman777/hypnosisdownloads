@@ -15,7 +15,13 @@ class AddToPlaylistCubit extends Cubit<AddToPlaylistState> {
   Future<void> addToPlaylist(Product audio, Playlist playlist) async {
     emit(AddToPlaylistInProgress(audio));
     try {
-      await _playlistsRepository.addToPlaylist(audio, playlist);
+      // Use the playlist returned by the repository (not the snapshot we
+      // started with) so the local Hive cache reflects the server's actual
+      // state immediately — the ValueListenableBuilder in the list item
+      // shows the check-mark without waiting for a full PlaylistsCubit
+      // refresh round-trip.
+      final updated = await _playlistsRepository.addToPlaylist(audio, playlist);
+      await _playlistsRepository.writePlaylistToBox(updated);
       emit(AddToPlaylistSuccess(playlist.name));
     } catch (e) {
       emit(AddToPlaylistFailure(parseErrorMessageFrom(e)));

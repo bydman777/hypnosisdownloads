@@ -126,6 +126,22 @@ class HypnosisAudioPlayerExtensionHelper with ChangeNotifier {
     return await _hypnosisAudioPlayerController.stop();
   }
 
+  /// Current playback volume (0.0 - 1.0).
+  double get volume => _hypnosisAudioPlayerController.volume;
+
+  /// Set the playback volume (0.0 - 1.0).
+  Future<void> setVolume(double volume) async {
+    return _hypnosisAudioPlayerController.setVolume(volume);
+  }
+
+  /// Fades the volume to zero over [duration], pauses, then restores volume.
+  /// Used by Sleep Mode.
+  Future<void> fadeOutAndPause({
+    Duration duration = const Duration(seconds: 3),
+  }) async {
+    return _hypnosisAudioPlayerController.fadeOutAndPause(duration: duration);
+  }
+
   Future<void> seek(Duration position) async {
     return await _hypnosisAudioPlayerController.seek(position);
   }

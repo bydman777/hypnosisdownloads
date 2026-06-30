@@ -56,7 +56,7 @@ class ComponentColors {
 
 // Color names are from https://chir.ag/projects/name-that-color
 class _CustomColors {
-  static const Color keppel = Color(0xFF45AE9E);
+  static const Color keppel = Color(0xFF70B445);
   static const Color shark = Color(0xFF252527);
   static const Color gray = Color(0xFF8F8F8F);
   static const Color alto = Color(0xFFDEDEDE);

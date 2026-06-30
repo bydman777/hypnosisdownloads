@@ -173,6 +173,7 @@ class SessionsSearchView extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           ProductsListView(
+            key: ValueKey('search_results_$filter'),
             pack: ProductPack(
               'search_results',
               'Search results',

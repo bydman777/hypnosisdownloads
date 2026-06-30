@@ -164,7 +164,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         child: Row(
           children: [
-            DefaultIconButton(
+            DefaultIconButton.largest(
               SvgPicture.asset(Assets.shortArrowLeft),
               onTap: () {
                 if (_backButtonBehaviour != null) {

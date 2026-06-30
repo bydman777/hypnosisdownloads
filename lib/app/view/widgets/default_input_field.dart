@@ -18,6 +18,8 @@ class DefaultInputField extends StatelessWidget {
     this.textCapitalization,
     this.keyboardType,
     this.autofillHints,
+    this.autocorrect,
+    this.enableSuggestions,
   }) : super(key: key);
 
   final String? hintText;
@@ -32,6 +34,8 @@ class DefaultInputField extends StatelessWidget {
   final TextCapitalization? textCapitalization;
   final TextInputType? keyboardType;
   final Iterable<String>? autofillHints;
+  final bool? autocorrect;
+  final bool? enableSuggestions;
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +61,8 @@ class DefaultInputField extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyMedium,
           obscureText: obscureText,
           obscuringCharacter: '*',
-          autocorrect: false,
-          enableSuggestions: false,
+          autocorrect: autocorrect ?? !obscureText,
+          enableSuggestions: enableSuggestions ?? !obscureText,
           onChanged: onChanged,
           textCapitalization: textCapitalization ?? TextCapitalization.none,
           autofillHints: autofillHints,

@@ -72,7 +72,7 @@ class _AudiosViewState extends State<AudiosView> {
     } else if (state is SessionsLoadInProgress) {
       return buildProgressWidget();
     } else if (state is SessionsLoadFailure) {
-      return buildErrorWidget(state.errorMessage);
+      return buildErrorWidget(context, state.errorMessage);
     }
     return nothing;
   }
@@ -82,8 +82,23 @@ class _AudiosViewState extends State<AudiosView> {
         child: LoadingView(),
       );
 
-  Widget buildErrorWidget(String errorMessage) => Center(
-        child: BodyMediumText.dark(errorMessage),
+  Widget buildErrorWidget(BuildContext context, String errorMessage) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            BodyMediumText.dark(
+              errorMessage.isEmpty
+                  ? "Couldn't load your library. Please try again."
+                  : errorMessage,
+            ),
+            const SizedBox(height: 16),
+            PrimaryButton(
+              'Retry',
+              onTap: () => context.read<SessionsCubit>().loadSessions(),
+            ),
+          ],
+        ),
       );
 
   Widget buildEmptyView() {
