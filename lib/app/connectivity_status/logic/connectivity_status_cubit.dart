@@ -29,29 +29,32 @@ class ConnectivityStatusCubit extends Cubit<ConnectivityStatusState> {
 
   Future<void> _showConnectivityStatus() async {
     emit(const ConnectivityStatusLoadInProgress());
-    final connectivityResult = await connectivity.checkConnectivity();
-    if (connectivityResult == ConnectivityResult.none) {
-      emit(const ConnectivityStatusOffline());
-    } else {
-      emit(const ConnectivityStatusOnline());
-    }
+    final results = await connectivity.checkConnectivity();
+    emit(_stateFor(results));
   }
 
   Future<void> _startListeningToConnectivityStatus() async {
     try {
       connectivitySubscription =
-          connectivity.onConnectivityChanged.listen((connectivityResult) {
-        if (connectivityResult == ConnectivityResult.none) {
-          emit(const ConnectivityStatusOffline());
-        } else {
-          emit(const ConnectivityStatusOnline());
-        }
+          connectivity.onConnectivityChanged.listen((results) {
+        emit(_stateFor(results));
       });
     } on UserCanceledException catch (_) {
       emit(const ConnectivityStatusStateInitial());
     } catch (e) {
       emit(ConnectivityStatusLoadFailure(e.toString()));
     }
+  }
+
+  /// connectivity_plus 6.x emits `List<ConnectivityResult>`. We treat the
+  /// device as offline when the list is empty or contains only
+  /// [ConnectivityResult.none].
+  ConnectivityStatusState _stateFor(List<ConnectivityResult> results) {
+    final hasConnection = results
+        .any((r) => r != ConnectivityResult.none);
+    return hasConnection
+        ? const ConnectivityStatusOnline()
+        : const ConnectivityStatusOffline();
   }
 
   Future<void> _stopListeningToConnectivityStatus() async {

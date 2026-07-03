@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hypnosis_downloads/app/connectivity_status/logic/connectivity_status_cubit.dart';
 import 'package:hypnosis_downloads/library/data/model/product.dart';
+import 'package:hypnosis_downloads/library/data/model/product_type.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -105,6 +106,13 @@ class AudioPlayerControllerWidget extends InheritedWidget {
       Future<Product> Function(Product) useOfflineLinkIfAvailable,
       {int initialIndex = 0}) async {
     if (initialIndex < products.length && initialIndex >= 0) {
+      // Capture the product the caller actually wants to play BEFORE we reorder
+      // or filter the list, so we can find it again afterwards. Otherwise the
+      // sort below (and the script/PDF filtering) would leave [initialIndex]
+      // pointing at a different item — this is what made tapping a search
+      // result open the player with the wrong (or no) audio.
+      final targetProduct = products[initialIndex];
+
       // Log original products order
       debugPrint('[tagx] Original products order:');
       for (int i = 0; i < products.length; i++) {
@@ -112,25 +120,41 @@ class AudioPlayerControllerWidget extends InheritedWidget {
             '[tagx] $i: ${products[i].id} - ${products[i].name} - ${products[i].orderTime}');
       }
 
-      final sortedProducts = List<Product>.from(products)
+      // Scripts (PDFs) cannot be played and are skipped when building the
+      // audio sources. Filter them out here too so the source list, the
+      // sequence indices, and [_currentIndex] all stay aligned. The search
+      // results pack is the only pack that mixes audios and scripts.
+      final playableProducts = List<Product>.from(products)
+          .where((p) => p.type != DownloadProductType.script)
+          .toList()
         ..sort((a, b) => b.orderTime.compareTo(a.orderTime));
 
       // Log sorted products order
       debugPrint('[tagx] Sorted products order:');
-      for (int i = 0; i < sortedProducts.length; i++) {
+      for (int i = 0; i < playableProducts.length; i++) {
         debugPrint(
-            '[tagx] $i: ${sortedProducts[i].id} - ${sortedProducts[i].name} - ${sortedProducts[i].orderTime}');
+            '[tagx] $i: ${playableProducts[i].id} - ${playableProducts[i].name} - ${playableProducts[i].orderTime}');
       }
+
+      if (playableProducts.isEmpty) {
+        debugPrint('[tagx] No playable products after filtering scripts');
+        return Future.error("No audio source");
+      }
+
+      // Re-resolve the target's position in the sorted/filtered list. Falls
+      // back to 0 if the target was a script or is missing for any reason.
+      final resolvedIndex = playableProducts.indexOf(targetProduct);
 
       _audioSource = SequenceAudioSource(
         id,
         type,
-        sortedProducts, // Use the sorted list
+        playableProducts, // Use the sorted, audio-only list
         useOfflineLinkIfAvailable,
         connectivityStatusCubit,
       );
-      _currentIndex = initialIndex;
-      debugPrint('[tagx] Initial index set to: $_currentIndex');
+      _currentIndex = resolvedIndex >= 0 ? resolvedIndex : 0;
+      debugPrint('[tagx] Initial index set to: $_currentIndex '
+          '(requested $initialIndex, target ${targetProduct.id})');
 
       currentIndexController.add(_currentIndex);
       audioSourceController.add(_audioSource);
@@ -162,7 +186,7 @@ class AudioPlayerControllerWidget extends InheritedWidget {
         }
       });
 
-      await _selectItemAt(initialIndex);
+      await _selectItemAt(_currentIndex!);
       return await play();
     } else {
       debugPrint(

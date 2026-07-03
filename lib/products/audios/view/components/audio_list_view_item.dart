@@ -12,6 +12,7 @@ import 'package:hypnosis_downloads/audio_player/audio_player_controller_widget_e
 import 'package:hypnosis_downloads/playlists/data/model/playlist.dart';
 import 'package:hypnosis_downloads/playlists/playlist/view/components/playlist_audio_more_bottom_sheet.dart';
 import 'package:hypnosis_downloads/products/audios/download/data/model/downloadable.dart';
+import 'package:hypnosis_downloads/products/audios/download/logic/downloadable_products_cubit.dart';
 import 'package:hypnosis_downloads/products/audios/view/components/audio_more_bottom_sheet.dart';
 import 'package:hypnosis_downloads/products/scripts/view/components/script_more_bottom_sheet.dart';
 import 'package:hypnosis_downloads/library/data/model/product.dart';
@@ -50,18 +51,40 @@ class AudioListViewItem extends StatelessWidget {
                     downloadable.downloadedPercent == 100;
             final isEnabled = isOnline || isDownloaded;
             return GestureDetector(
-              onTap: isEnabled
-                  ? onTap
-                  : () {
-                      if (!isOnline) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                'Only downloaded titles can be played while offline.'),
-                          ),
-                        );
-                      }
-                    },
+              onTap: () async {
+                // Always re-verify at tap time — the passed-in `downloadable`
+                // and the ConnectivityStatus state may both be stale.
+                final connectivityState =
+                    context.read<ConnectivityStatusCubit>().state;
+                final onlineNow =
+                    connectivityState is ConnectivityStatusOnline;
+                if (!onlineNow) {
+                  var downloadedNow = downloadable.status ==
+                          DownloadTaskStatus.complete.index ||
+                      downloadable.downloadedPercent == 100;
+                  if (!downloadedNow) {
+                    try {
+                      final fresh = await context
+                          .read<DownloadableProductsCubit>()
+                          .getDownloadStatusForSingle(downloadable.item);
+                      downloadedNow = fresh.status ==
+                              DownloadTaskStatus.complete.index ||
+                          fresh.downloadedPercent == 100;
+                    } catch (_) {}
+                  }
+                  if (!downloadedNow) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Only downloaded titles can be played while offline.'),
+                      ),
+                    );
+                    return;
+                  }
+                }
+                onTap?.call();
+              },
               child: Opacity(
                 opacity: isEnabled ? 1 : 0.75,
                 child: SizedBox(

@@ -154,8 +154,8 @@ Future<void> configureAudioSession() async {
 
 Future<Directory> onlyUseCacheIfOffline(Dio httpClient) async {
   var isOnline = false;
-  Connectivity().onConnectivityChanged.listen((event) {
-    isOnline = event != ConnectivityResult.none;
+  Connectivity().onConnectivityChanged.listen((results) {
+    isOnline = results.any((r) => r != ConnectivityResult.none);
   });
   final directory = await getApplicationSupportDirectory();
   httpClient.interceptors.add(InterceptorsWrapper(

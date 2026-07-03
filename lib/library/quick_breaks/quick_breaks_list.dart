@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hypnosis_downloads/app/connectivity_status/logic/connectivity_status_cubit.dart';
 import 'package:hypnosis_downloads/app/home/routes/listen_routes.dart';
 import 'package:hypnosis_downloads/library/data/model/product_pack.dart';
 import 'package:hypnosis_downloads/products/audios/download/data/model/downloadable.dart';
@@ -65,6 +67,17 @@ class QuickBreaksList extends StatelessWidget {
             ),
             child: InkWell(
               onTap: () {
+                final isOnline = context.read<ConnectivityStatusCubit>().state
+                    is ConnectivityStatusOnline;
+                if (!isOnline) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          'Only downloaded titles can be played while offline.'),
+                    ),
+                  );
+                  return;
+                }
                 final product = Product(
                   audioItems[index].url,
                   audioItems[index].title,

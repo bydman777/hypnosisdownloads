@@ -81,34 +81,50 @@ class HypnosisAudioPlayerExtensionHelper with ChangeNotifier {
 
   void hide() => _hypnosisAudioPlayerController.hide();
 
-  /// Set [SequenceAudioSource] audio source with [initialIndex] as the initial index.
+  /// Set the playlist as the audio source, starting at [initialProduct].
+  ///
+  /// The initial index is resolved against the same audio-only list that is
+  /// handed to the player, so scripts filtered out here can't shift it onto the
+  /// wrong track.
   Future<void> setPlaylistAudioSource(Playlist playlist,
       {required Future<Product> Function(Product) useOfflineLinkIfAvailable,
-      int initialIndex = 0}) async {
+      Product? initialProduct}) async {
+    final audioProducts = playlist.products
+        .where((element) => element.type == DownloadProductType.audio)
+        .toList();
     return _hypnosisAudioPlayerController.setAudioSource(
       playlist.id,
       SequenceAudioSourceType.playlist,
-      playlist.products
-          .where((element) => element.type == DownloadProductType.audio)
-          .toList(),
+      audioProducts,
       useOfflineLinkIfAvailable,
-      initialIndex: initialIndex,
+      initialIndex: _resolveInitialIndex(audioProducts, initialProduct),
     );
   }
 
-  /// Set [SequenceAudioSource] audio source with [initialIndex] as the initial index.
+  /// Set the pack as the audio source, starting at [initialProduct].
+  ///
+  /// The initial index is resolved against the same audio-only list that is
+  /// handed to the player, so scripts filtered out here can't shift it onto the
+  /// wrong track.
   Future<void> setPackAudioSource(ProductPack pack,
       {required Future<Product> Function(Product) useOfflineLinkIfAvailable,
-      int initialIndex = 0}) async {
+      Product? initialProduct}) async {
+    final audioProducts = pack.products
+        .where((element) => element.type == DownloadProductType.audio)
+        .toList();
     return _hypnosisAudioPlayerController.setAudioSource(
       pack.id,
       SequenceAudioSourceType.pack,
-      pack.products
-          .where((element) => element.type == DownloadProductType.audio)
-          .toList(),
+      audioProducts,
       useOfflineLinkIfAvailable,
-      initialIndex: initialIndex,
+      initialIndex: _resolveInitialIndex(audioProducts, initialProduct),
     );
+  }
+
+  int _resolveInitialIndex(List<Product> audioProducts, Product? target) {
+    if (target == null) return 0;
+    final index = audioProducts.indexOf(target);
+    return index < 0 ? 0 : index;
   }
 
   /// Play current audio source from current index.

@@ -77,7 +77,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         if (widget.audioPack != null) {
           await context.hypnosisAudioPlayer.setPackAudioSource(
               widget.audioPack!,
-              initialIndex: widget.audioPack!.products.indexOf(widget.audio),
+              initialProduct: widget.audio,
               useOfflineLinkIfAvailable: (product) async {
             final context = NavigationService.navigatorKey.currentContext!;
             final downloadableProductsCubit =
@@ -93,7 +93,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         } else if (widget.playlist != null) {
           await context.hypnosisAudioPlayer.setPlaylistAudioSource(
               widget.playlist!,
-              initialIndex: widget.playlist!.products.indexOf(widget.audio),
+              initialProduct: widget.audio,
               useOfflineLinkIfAvailable: (product) async {
             final context = NavigationService.navigatorKey.currentContext!;
             final downloadableProductsCubit =

@@ -169,6 +169,23 @@ class SessionsSearchView extends StatelessWidget {
                 'Search results',
                 style: style?.copyWith(fontWeight: FontWeight.w600),
               ),
+              const Spacer(),
+              InkWell(
+                onTap: () => context.read<ProductSearchBloc>().clear(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  child: Text(
+                    'Clear',
+                    style: style?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: ComponentColors.primaryColor,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
