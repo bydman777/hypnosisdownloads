@@ -18,9 +18,11 @@ class AppView extends StatelessWidget {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    final isDark =
+        MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent, // Set status bar color
-      statusBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
     ));
     precacheImage(
       const AssetImage(Assets.youtubeImagePlaceholder),
@@ -29,6 +31,8 @@ class AppView extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: ThemeMode.system,
       navigatorKey: NavigationService.navigatorKey,
       home: initialPage,
     );

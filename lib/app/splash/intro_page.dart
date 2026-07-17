@@ -8,7 +8,7 @@ import 'package:hypnosis_downloads/app/view/components/app_logo.dart';
 import 'package:hypnosis_downloads/app/view/widgets/default_buttons.dart';
 import 'package:hypnosis_downloads/authentication/login_with_email_password/view/login_page.dart';
 import 'package:hypnosis_downloads/authentication/register/view/register_page.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:video_player/video_player.dart';
 
 class IntroPage extends StatelessWidget {
   const IntroPage({super.key});
@@ -148,7 +148,7 @@ class _LoginLinkText extends StatelessWidget {
           TextSpan(
             text: 'Login here',
             style: const TextStyle(
-              color: Color(0xFFED8B24),
+              color: ComponentColors.linkColor,
               fontWeight: FontWeight.w600,
             ),
             recognizer: TapGestureRecognizer()..onTap = onLoginTap,
@@ -167,26 +167,21 @@ class IntroVideoWidget extends StatefulWidget {
 }
 
 class _IntroVideoWidgetState extends State<IntroVideoWidget> {
-  late YoutubePlayerController _controller;
+  static const _introVideoAsset = 'assets/videos/splash_mark.mp4';
+
+  late VideoPlayerController _controller;
+  bool _initialized = false;
 
   bool visiblePlaceholder = true;
 
   @override
   void initState() {
-    _controller = YoutubePlayerController(
-      initialVideoId: 'jVrudNg5ju4',
-      flags: const YoutubePlayerFlags(
-        mute: false,
-        autoPlay: false,
-        disableDragSeek: false,
-        loop: false,
-        isLive: false,
-        forceHD: false,
-        enableCaption: false,
-        hideThumbnail: true,
-      ),
-    );
     super.initState();
+    _controller = VideoPlayerController.asset(_introVideoAsset)
+      ..initialize().then((_) {
+        if (!mounted) return;
+        setState(() => _initialized = true);
+      });
   }
 
   @override
@@ -204,17 +199,29 @@ class _IntroVideoWidgetState extends State<IntroVideoWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width - 32;
+    // Fall back to a square box until the video reports its real aspect ratio.
+    final aspectRatio =
+        _initialized && _controller.value.aspectRatio > 0
+            ? _controller.value.aspectRatio
+            : 1.0;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: Stack(
         alignment: Alignment.center,
         children: [
-          YoutubePlayer(
-            controller: _controller,
-            width: MediaQuery.of(context).size.width - 32,
+          SizedBox(
+            width: width,
+            child: AspectRatio(
+              aspectRatio: aspectRatio,
+              child: _initialized
+                  ? VideoPlayer(_controller)
+                  : const ColoredBox(color: Colors.black),
+            ),
           ),
           SizedBox.square(
-            dimension: MediaQuery.of(context).size.width - 32,
+            dimension: width,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: visiblePlaceholder ? _buildPlaceholder() : null,

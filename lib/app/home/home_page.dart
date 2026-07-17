@@ -147,19 +147,6 @@ class _HomePageState extends State<HomePage> {
                 selector: (context, provider) =>
                     Provider.of<PageIndexProvider>(context).activeIndex,
                 builder: ((context, value, child) {
-                  if (value == 0 &&
-                      sessionsNavigatorKey.currentContext != null) {
-                    Navigator.of(sessionsNavigatorKey.currentContext!)
-                        .popUntil((route) => route.isFirst);
-                  } else if (value == 1 &&
-                      listenNavigatorKey.currentContext != null) {
-                    Navigator.of(listenNavigatorKey.currentContext!)
-                        .popUntil((route) => route.isFirst);
-                  } else if (value == 2 &&
-                      playlistsNavigatorKey.currentContext != null) {
-                    Navigator.of(playlistsNavigatorKey.currentContext!)
-                        .popUntil((route) => route.isFirst);
-                  }
                   return IndexedStack(
                     index: value as int,
                     children: [
@@ -186,6 +173,22 @@ class _HomePageState extends State<HomePage> {
             onTap: (index) {
               if (index == 0) {
                 context.read<ProductSearchBloc>().clear();
+              }
+              // Reset the tapped tab's own navigation stack to its root, so
+              // re-tapping a bottom-nav item returns you to that tab's home.
+              // This intentionally does NOT fire for programmatic tab switches
+              // (e.g. returning from the player), which must preserve the
+              // underlying playlist/pack detail the user was viewing.
+              final tappedTabNavigatorKey = index == 0
+                  ? sessionsNavigatorKey
+                  : index == 1
+                      ? listenNavigatorKey
+                      : index == 2
+                          ? playlistsNavigatorKey
+                          : null;
+              if (tappedTabNavigatorKey?.currentContext != null) {
+                Navigator.of(tappedTabNavigatorKey!.currentContext!)
+                    .popUntil((route) => route.isFirst);
               }
               Provider.of<PageIndexProvider>(context, listen: false)
                   .setActiveIndex(activeIndex: index);

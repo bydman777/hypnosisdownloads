@@ -24,31 +24,9 @@ class RegisterWithEmailPasswordCubit extends Cubit<AuthRegisterState> {
     String email,
     String password,
     String confirmPassword,
-    String firstName,
-    String lastName,
   ) async {
     emit(const AuthRegisterInProgress());
-    if (firstName.isEmpty &&
-        lastName.isNotEmpty &&
-        email.isNotEmpty &&
-        password.isNotEmpty &&
-        confirmPassword.isNotEmpty) {
-      emit(const AuthRegisterFailure('First name missing'));
-      return;
-    }
-    if (lastName.isEmpty &&
-        firstName.isNotEmpty &&
-        email.isNotEmpty &&
-        password.isNotEmpty &&
-        confirmPassword.isNotEmpty) {
-      emit(const AuthRegisterFailure('Last name missing'));
-      return;
-    }
-    if (email.isEmpty ||
-        password.isEmpty ||
-        confirmPassword.isEmpty ||
-        firstName.isEmpty ||
-        lastName.isEmpty) {
+    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
       emit(const AuthRegisterFailure('Please fill in all fields'));
       return;
     }
@@ -61,11 +39,8 @@ class RegisterWithEmailPasswordCubit extends Cubit<AuthRegisterState> {
           await _registerWithEmailPasswordRepository.registerWithEmailPassword(
         email,
         password,
-        firstName,
-        lastName,
       );
       _currentUserRepository.set(currentUser);
-      await _currentUserRepository.update(name: '$firstName $lastName');
       emit(const AuthRegisterSuccess());
     } on UserCanceledException catch (_) {
       emit(const AuthRegisterStateInitial());

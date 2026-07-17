@@ -58,7 +58,7 @@ class _RecentProductsSectionState extends State<RecentProductsSection> {
                 children: [
                   HeadlineMediumText.dark(
                     widget.pack.type == DownloadProductType.audio
-                        ? 'Recent audios'
+                        ? 'Your audios'
                         : 'Recent scripts',
                   ),
                   const Spacer(),
@@ -84,7 +84,13 @@ class _RecentProductsSectionState extends State<RecentProductsSection> {
                       }
                     }),
                   ),
-                  AnimatedSwitcher(
+                ],
+              ),
+              _renderContent(_filterProducts(context, recentProducts)),
+              if (downloadableProducts.length > 3)
+                Align(
+                  alignment: Alignment.center,
+                  child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 50),
                     child: DefaultTextButton(
                       key: ValueKey(expanded),
@@ -93,10 +99,8 @@ class _RecentProductsSectionState extends State<RecentProductsSection> {
                         expanded = !expanded;
                       }),
                     ),
-                  )
-                ],
-              ),
-              _renderContent(_filterProducts(context, recentProducts)),
+                  ),
+                ),
             ],
           );
         } else {

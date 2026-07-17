@@ -14,8 +14,6 @@ class RegisterWithEmailPasswordRepository {
   Future<CurrentUser> registerWithEmailPassword(
     String email,
     String password,
-    String firstName,
-    String lastName,
   ) async {
     final authFormData = FormData.fromMap(
       {
@@ -23,8 +21,6 @@ class RegisterWithEmailPasswordRepository {
         "rev": 1,
         "mail": email,
         "password": password,
-        "first_name": firstName,
-        "last_name": lastName,
       },
     );
 
@@ -36,7 +32,7 @@ class RegisterWithEmailPasswordRepository {
     forceToThrowExceptionIfFailed(response);
 
     final json = jsonDecode(response.data);
-    json['name'] = '$firstName $lastName';
+    json['name'] = json['name'] ?? email;
     json['email'] = email;
     json['password'] = password;
     return CurrentUser.fromJson(json);

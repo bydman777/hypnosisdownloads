@@ -92,6 +92,13 @@ class HypnosisAudioPlayerExtensionHelper with ChangeNotifier {
     final audioProducts = playlist.products
         .where((element) => element.type == DownloadProductType.audio)
         .toList();
+    debugPrint(
+        '[tagx] ===== PLAYLIST PLAY ORDER "${playlist.name}" (${audioProducts.length} tracks) =====');
+    for (var i = 0; i < audioProducts.length; i++) {
+      debugPrint(
+          '[tagx] play #$i: ${audioProducts[i].name} (id=${audioProducts[i].id})');
+    }
+    debugPrint('[tagx] initialProduct: ${initialProduct?.name ?? '(first)'}');
     return _hypnosisAudioPlayerController.setAudioSource(
       playlist.id,
       SequenceAudioSourceType.playlist,

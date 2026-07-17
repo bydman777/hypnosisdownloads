@@ -7,12 +7,10 @@ import 'package:hypnosis_downloads/app/view/components/text/body_medium_text.dar
 import 'package:hypnosis_downloads/app/view/components/text/headline_medium_text.dart';
 import 'package:hypnosis_downloads/app/view/widgets/default_bottom_sheet_skeleton.dart';
 import 'package:hypnosis_downloads/playlists/data/model/playlist.dart';
-import 'package:hypnosis_downloads/playlists/playlist/common/remove_from_playlist/cubit/remove_from_playlist_cubit.dart';
 import 'package:hypnosis_downloads/products/audios/download/data/model/downloadable.dart';
 import 'package:hypnosis_downloads/library/data/model/product.dart';
 import 'package:hypnosis_downloads/library/view/components/delete_confirmation_bottom_sheet.dart';
 import 'package:hypnosis_downloads/library/view/components/product_details_bottom_sheet.dart';
-import 'package:provider/provider.dart';
 
 class PlaylistAudioMoreBottomSheet extends StatefulWidget {
   const PlaylistAudioMoreBottomSheet({
@@ -49,16 +47,6 @@ class _PlaylistAudioMoreBottomSheetState
             ],
           ),
           const SizedBox(height: 8),
-          buildActionWidget(
-            icon: SvgPicture.asset(IconsOutlined.delete),
-            text: 'Delete from playlist',
-            onTap: () => context
-                .read<RemoveFromPlaylistCubit>()
-                .removeFromPlaylist(widget.downloadable.item, widget.playlist)
-                .whenComplete(() {
-              Navigator.of(context).pop();
-            }),
-          ),
           buildActionWidget(
             icon: SvgPicture.asset(IconsOutlined.note),
             text: 'Details',

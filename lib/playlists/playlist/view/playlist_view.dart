@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hypnosis_downloads/app/connectivity_status/logic/connectivity_status_cubit.dart';
 import 'package:hypnosis_downloads/app/home/routes/navigation_service.dart';
 import 'package:hypnosis_downloads/app/view/common/assets.dart';
@@ -19,6 +21,7 @@ import 'package:hypnosis_downloads/playlists/data/model/playlist.dart';
 import 'package:hypnosis_downloads/playlists/playlist/add_to_playlist/add_to_playlist_page.dart';
 import 'package:hypnosis_downloads/playlists/playlist/common/remove_from_playlist/cubit/remove_from_playlist_cubit.dart';
 import 'package:hypnosis_downloads/playlists/playlist/view/components/playlist_toggles.dart';
+import 'package:hypnosis_downloads/library/data/model/product_type.dart';
 import 'package:hypnosis_downloads/products/audios/download/logic/downloadable_products_cubit.dart';
 import 'package:hypnosis_downloads/products/view/products_list_view.dart';
 import 'package:just_audio/just_audio.dart';
@@ -52,6 +55,15 @@ class NonEmptyPlaylistView extends StatefulWidget {
 }
 
 class _NonEmptyPlaylistViewState extends State<NonEmptyPlaylistView> {
+  /// The freshest copy of this playlist. Drag-reorder persists the new order to
+  /// the Hive box (via [reorderPlaylist]) but does not push it back up through
+  /// [PlaylistPage], so `widget.playlist` can be stale. Reading from the box at
+  /// play time makes the playback queue follow the reordered order immediately
+  /// instead of only after a full playlists refresh.
+  Playlist get _currentPlaylist =>
+      Hive.box<Playlist>('playlists').get(widget.playlist.id) ??
+      widget.playlist;
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<RemoveFromPlaylistCubit, RemoveFromPlaylistState>(
@@ -83,7 +95,10 @@ class _NonEmptyPlaylistViewState extends State<NonEmptyPlaylistView> {
                                 width: 80,
                                 height: 80,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? DarkComponentColors.primaryCardColor
+                                      : ComponentColors.primaryCardColor,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Center(
@@ -178,6 +193,14 @@ class _NonEmptyPlaylistViewState extends State<NonEmptyPlaylistView> {
             if (isCurrentPlaylist) {
               if (playing) {
                 await context.hypnosisAudioPlayer.pause();
+              } else if (_playlistOrderChanged()) {
+                // Was paused/stopped and the order changed meanwhile: rebuild
+                // the queue so playback resumes in the new order instead of the
+                // stale one.
+                if (!await _ensureFirstTrackPlayableOffline(context)) {
+                  return;
+                }
+                await _setCurrentPlaylist();
               } else {
                 await context.hypnosisAudioPlayer.play();
               }
@@ -201,9 +224,8 @@ class _NonEmptyPlaylistViewState extends State<NonEmptyPlaylistView> {
         context.read<ConnectivityStatusCubit>().state is ConnectivityStatusOnline;
     if (isOnline) return true;
 
-    final firstAudio = widget.playlist.products.isNotEmpty
-        ? widget.playlist.products.first
-        : null;
+    final products = _currentPlaylist.products;
+    final firstAudio = products.isNotEmpty ? products.first : null;
     if (firstAudio == null) return true;
 
     final downloadable = await context
@@ -224,9 +246,23 @@ class _NonEmptyPlaylistViewState extends State<NonEmptyPlaylistView> {
     return true;
   }
 
+  /// True if the currently loaded audio queue no longer matches the freshest
+  /// playlist order (e.g. the user reordered/sorted while playback was paused).
+  bool _playlistOrderChanged() {
+    final source = context.hypnosisAudioPlayer.audioSource;
+    if (source == null || source.id != widget.playlist.id) return false;
+
+    final queuedIds = source.products.map((p) => p.id).toList();
+    final freshIds = _currentPlaylist.products
+        .where((p) => p.type == DownloadProductType.audio)
+        .map((p) => p.id)
+        .toList();
+    return !listEquals(queuedIds, freshIds);
+  }
+
   Future<void> _setCurrentPlaylist() async {
     await context.hypnosisAudioPlayer.setPlaylistAudioSource(
-      widget.playlist,
+      _currentPlaylist,
       useOfflineLinkIfAvailable: (product) async {
         if (!mounted) return product;
         final downloadableProductsCubit =

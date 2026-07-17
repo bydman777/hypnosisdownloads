@@ -2,6 +2,7 @@ import 'package:authentication_logic/authentication_logic.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hypnosis_downloads/app/view/common/colors.dart';
 import 'package:hypnosis_downloads/app/view/components/text/body_medium_text.dart';
 import 'package:hypnosis_downloads/app/view/components/ui_views_states.dart';
 import 'package:hypnosis_downloads/app/view/widgets/default_buttons.dart';
@@ -156,7 +157,9 @@ class _QuickBreaksSectionState extends State<QuickBreaksSection> {
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? DarkComponentColors.primaryCardColor
+                        : ComponentColors.primaryCardColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   width: double.infinity,

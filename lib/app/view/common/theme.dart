@@ -107,8 +107,51 @@ final lightTheme = ThemeData(
   ), colorScheme: ColorScheme.fromSwatch(primarySwatch: _primarySwatch).copyWith(background: ComponentColors.backgroundColor),
 );
 
-/// Applicaliton dark theme, currently don'y uses
-final darkTheme = lightTheme.copyWith();
+/// Application dark theme (activated via [ThemeMode.system]).
+final darkTheme = lightTheme.copyWith(
+  brightness: Brightness.dark,
+  scaffoldBackgroundColor: const Color(0xFF121212),
+  appBarTheme: const AppBarTheme(
+    systemOverlayStyle: SystemUiOverlayStyle.light,
+    iconTheme: IconThemeData(color: Colors.white),
+    backgroundColor: Color(0xFF1E1E1E),
+  ),
+  colorScheme: ColorScheme.fromSwatch(primarySwatch: _primarySwatch).copyWith(
+    brightness: Brightness.dark,
+    background: const Color(0xFF121212),
+    surface: const Color(0xFF1E1E1E),
+  ),
+  inputDecorationTheme: lightTheme.inputDecorationTheme.copyWith(
+    border: OutlineInputBorder(
+      borderSide: const BorderSide(color: Color(0xFF444444)),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Color(0xFF444444)),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    disabledBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Color(0xFF444444)),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: const BorderSide(color: Color(0xFF444444)),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    filled: true,
+    fillColor: const Color(0xFF2C2C2C),
+    hintStyle: const TextStyle(
+      fontWeight: FontWeight.w400,
+      fontSize: 14,
+      height: 20.0 / 14.0,
+      color: Color(0xFF888888),
+    ),
+  ),
+  textTheme: lightTheme.textTheme.apply(
+    bodyColor: const Color(0xFFF5F5F5),
+    displayColor: const Color(0xFFF5F5F5),
+  ),
+);
 
 MaterialColor _createMaterialColor(Color color) {
   final strengths = <double>[.05];

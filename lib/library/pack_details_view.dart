@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:hypnosis_downloads/app/connectivity_status/logic/connectivity_status_cubit.dart';
 import 'package:hypnosis_downloads/app/home/routes/navigation_service.dart';
+import 'package:hypnosis_downloads/app/view/common/colors.dart';
 import 'package:hypnosis_downloads/app/view/components/app_cover.dart';
 import 'package:hypnosis_downloads/app/view/components/custom_loader_overlay.dart';
 import 'package:hypnosis_downloads/app/view/components/play_button.dart';
@@ -186,12 +187,14 @@ class _PackDetailsViewState extends State<PackDetailsView> {
     );
   }
 
-  Widget buildImagePlaceholder() {
+  Widget buildImagePlaceholder(BuildContext context) {
     return Container(
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.grey[300],
+        color: Theme.of(context).brightness == Brightness.dark
+            ? DarkComponentColors.imagePlaceholderColor
+            : Colors.grey[300],
       ),
     );
   }

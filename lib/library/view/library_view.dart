@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hypnosis_downloads/app/view/components/group_tab.dart';
+import 'package:hypnosis_downloads/library/cubit/sessions_cubit.dart';
 import 'package:hypnosis_downloads/library/quick_breaks/quick_breaks_view.dart';
 import 'package:hypnosis_downloads/products/audios/view/audios_view.dart';
 import 'package:hypnosis_downloads/products/scripts/view/scripts_view.dart';
@@ -24,26 +26,31 @@ class _LibraryViewState extends State<LibraryView> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: (isQuickBreaksMode as bool)
               ? const QuickBreaksView()
-              : SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const LatestNewsWidget(),
-                      GroupTab(
-                        items: const ['Audios', 'Scripts'],
-                        onChange: (index) {
-                          setState(() {
-                            activeIndex = index;
-                          });
-                        },
-                      ),
-                      IndexedStack(
-                        index: activeIndex,
-                        children: const [
-                          AudiosView(),
-                          ScriptsView(),
-                        ],
-                      ),
-                    ],
+              : RefreshIndicator(
+                  onRefresh: () =>
+                      context.read<SessionsCubit>().loadSessions(),
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      children: [
+                        const LatestNewsWidget(),
+                        GroupTab(
+                          items: const ['Audios', 'Scripts'],
+                          onChange: (index) {
+                            setState(() {
+                              activeIndex = index;
+                            });
+                          },
+                        ),
+                        IndexedStack(
+                          index: activeIndex,
+                          children: const [
+                            AudiosView(),
+                            ScriptsView(),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
         );

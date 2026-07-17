@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hypnosis_downloads/app/connectivity_status/logic/connectivity_status_cubit.dart';
+import 'package:hypnosis_downloads/app/view/common/colors.dart';
 import 'package:hypnosis_downloads/app/home/routes/listen_routes.dart';
 import 'package:hypnosis_downloads/library/data/model/product_pack.dart';
 import 'package:hypnosis_downloads/products/audios/download/data/model/downloadable.dart';
@@ -62,7 +63,9 @@ class QuickBreaksList extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 12),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? DarkComponentColors.primaryCardColor
+                  : ComponentColors.primaryCardColor,
               borderRadius: BorderRadius.circular(12),
             ),
             child: InkWell(
@@ -126,7 +129,9 @@ class QuickBreaksList extends StatelessWidget {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? DarkComponentColors.thumbnailBackgroundColor
+                            : ComponentColors.thumbnailBackgroundColor,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Image.asset(
@@ -149,8 +154,11 @@ class QuickBreaksList extends StatelessWidget {
                           ),
                           Text(
                             '${audioItems[index].duration} minutes',
-                            style: const TextStyle(
-                              color: Colors.grey,
+                            style: TextStyle(
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? DarkComponentColors.subtitleColor
+                                  : Colors.grey,
                             ),
                           ),
                         ],

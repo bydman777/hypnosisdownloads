@@ -42,9 +42,11 @@ class _PlayerViewState extends State<PlayerView> {
                 left: 16,
                 right: 16,
               ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? DarkComponentColors.primaryCardColor
+                    : ComponentColors.primaryCardColor,
+                borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(30),
                   topRight: Radius.circular(30),
                 ),
@@ -181,12 +183,14 @@ class _PlayerViewState extends State<PlayerView> {
     );
   }
 
-  Widget buildImagePlaceholder() {
+  Widget buildImagePlaceholder(BuildContext context) {
     return Container(
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.grey[300],
+        color: Theme.of(context).brightness == Brightness.dark
+            ? DarkComponentColors.imagePlaceholderColor
+            : Colors.grey[300],
       ),
     );
   }

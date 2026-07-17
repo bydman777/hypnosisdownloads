@@ -175,12 +175,14 @@ class YourScriptsPackListViewItem extends StatelessWidget {
     );
   }
 
-  Widget buildImagePlaceholder() {
+  Widget buildImagePlaceholder(BuildContext context) {
     return Container(
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.grey[300],
+        color: Theme.of(context).brightness == Brightness.dark
+            ? DarkComponentColors.imagePlaceholderColor
+            : Colors.grey[300],
       ),
     );
   }

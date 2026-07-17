@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hypnosis_downloads/app/home/routes/playlists_routes.dart';
 import 'package:hypnosis_downloads/app/view/common/assets.dart';
 import 'package:hypnosis_downloads/app/view/components/custom_app_bar.dart';
@@ -49,7 +50,13 @@ class _PlaylistPageState extends State<PlaylistPage> {
 
   @override
   void initState() {
-    playlist = widget.initialPlaylist;
+    // Prefer the freshest copy from the Hive box: a reorder/sort within this
+    // session updates the box but does NOT re-emit PlaylistsCubit, so the
+    // playlist handed in by the list screen can still carry the old order.
+    // Without this, backing out and re-entering reverted to the old order
+    // (a fresh app launch worked only because it re-fetched from the server).
+    playlist = Hive.box<Playlist>('playlists').get(widget.initialPlaylist.id) ??
+        widget.initialPlaylist;
     super.initState();
   }
 
@@ -114,7 +121,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
                 });
                 unawaited(context
                     .read<DownloadableProductsCubit>()
-                    .onPageOpened(playlist.products));
+                    .onPageOpened(playlist.products, preserveOrder: true));
               } on StateError catch (e) {
                 // playlist was deleted, do nothing
                 print(e);

@@ -126,8 +126,16 @@ class AudioPlayerControllerWidget extends InheritedWidget {
       // results pack is the only pack that mixes audios and scripts.
       final playableProducts = List<Product>.from(products)
           .where((p) => p.type != DownloadProductType.script)
-          .toList()
-        ..sort((a, b) => b.orderTime.compareTo(a.orderTime));
+          .toList();
+
+      // Playlists carry a user-defined (drag-reorderable) order, so preserve
+      // the order they were handed in. Packs/sessions have no manual order, so
+      // keep sorting them by download time (most recent first) as before.
+      // Sorting playlists here would discard the reordered order and always
+      // play by download time.
+      if (type != SequenceAudioSourceType.playlist) {
+        playableProducts.sort((a, b) => b.orderTime.compareTo(a.orderTime));
+      }
 
       // Log sorted products order
       debugPrint('[tagx] Sorted products order:');

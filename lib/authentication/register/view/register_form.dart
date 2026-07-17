@@ -18,8 +18,6 @@ class _RegisterFormState extends State<RegisterForm> {
   bool remember = true;
   String? error;
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _firstNameController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
@@ -61,16 +59,6 @@ class _RegisterFormState extends State<RegisterForm> {
                 error: error,
               ),
               const SizedBox(height: 16),
-              _NameInput(
-                hintText: 'First name',
-                controller: _firstNameController,
-              ),
-              const SizedBox(height: 16),
-              _NameInput(
-                hintText: 'Last name',
-                controller: _lastNameController,
-              ),
-              const SizedBox(height: 16),
               _PasswordInput(
                 hintText: 'Password',
                 controller: _passwordController,
@@ -110,8 +98,6 @@ class _RegisterFormState extends State<RegisterForm> {
                             _emailController.text,
                             _passwordController.text,
                             _confirmPasswordController.text,
-                            _firstNameController.text,
-                            _lastNameController.text,
                           );
                     } else {
                       error = 'Please enter a valid email address';
@@ -153,33 +139,7 @@ class _EmailInput extends StatelessWidget {
   }
 }
 
-class _NameInput extends StatelessWidget {
-  const _NameInput({Key? key, required this.hintText, required this.controller})
-      : super(key: key);
-
-  final String hintText;
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocListener<LoginWithEmailPasswordCubit, AuthState>(
-      listener: (context, state) {
-        if (state is RegisterSuccess) {
-          controller.clear();
-        }
-      },
-      child: DefaultInputField(
-        hintText: hintText,
-        controller: controller,
-        keyboardType: TextInputType.name,
-        textCapitalization: TextCapitalization.words,
-        autofillHints: const [AutofillHints.name],
-      ),
-    );
-  }
-}
-
-class _PasswordInput extends StatelessWidget {
+class _PasswordInput extends StatefulWidget {
   const _PasswordInput(
       {Key? key, required this.hintText, required this.controller})
       : super(key: key);
@@ -188,18 +148,32 @@ class _PasswordInput extends StatelessWidget {
   final TextEditingController controller;
 
   @override
+  State<_PasswordInput> createState() => _PasswordInputState();
+}
+
+class _PasswordInputState extends State<_PasswordInput> {
+  bool _obscure = true;
+
+  @override
   Widget build(BuildContext context) {
     return BlocListener<LoginWithEmailPasswordCubit, AuthState>(
       listener: (context, state) {
         if (state is RegisterSuccess) {
-          controller.clear();
+          widget.controller.clear();
         }
       },
       child: DefaultInputField(
-        hintText: hintText,
-        controller: controller,
-        obscureText: true,
+        hintText: widget.hintText,
+        controller: widget.controller,
+        obscureText: _obscure,
         autofillHints: const [AutofillHints.password],
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscure ? Icons.visibility_off : Icons.visibility,
+            color: ComponentColors.defaultIconColor,
+          ),
+          onPressed: () => setState(() => _obscure = !_obscure),
+        ),
       ),
     );
   }

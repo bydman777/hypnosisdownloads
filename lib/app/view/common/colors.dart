@@ -52,6 +52,24 @@ class ComponentColors {
   static const Color defaultIconColor = _CustomColors.tundora;
   static const Color subtitleColor = _CustomColors.stormGray;
   static const Color thumbnailBackgroundColor = _CustomColors.athensGray;
+  static const Color linkColor = _CustomColors.tahitiGold;
+}
+
+/// Dark-theme counterparts to [ComponentColors]. Used in theme-aware
+/// widgets to swap hardcoded light colours when the active theme is dark.
+class DarkComponentColors {
+  static const Color backgroundColor = Color(0xFF121212);
+  static const Color primaryCardColor = Color(0xFF2C2C2C);
+  static const Color appBarBackgroundColor = Color(0xFF1E1E1E);
+  static const Color bottomNavbarColor = Color(0xFF1E1E1E);
+  static const Color groupTabBackgroundColor = Color(0xFF2C2C2C);
+  static const Color thumbnailBackgroundColor = Color(0xFF2C2C2C);
+  static const Color defaultTextColor = Color(0xFFF5F5F5);
+  static const Color defaultBodyTextColor = Color(0xFFD0D0D0);
+  static const Color subtitleColor = Color(0xFF9A9FA8);
+  static const Color imagePlaceholderColor = Color(0xFF3A3A3A);
+  static const Color inputBorderColor = Color(0xFF444444);
+  static const Color enableTextFormBackgroundColor = Color(0xFF2C2C2C);
 }
 
 // Color names are from https://chir.ag/projects/name-that-color
@@ -75,4 +93,5 @@ class _CustomColors {
   static const Color mercury = Color(0xFFE8E8E8);
   static const Color stormGray = Color(0xFF707687);
   static const Color athensGray = Color(0xFFF2F4F7);
+  static const Color tahitiGold = Color(0xFFED8B24);
 }

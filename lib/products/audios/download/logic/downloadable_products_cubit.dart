@@ -23,8 +23,11 @@ class DownloadableProductsCubit extends Cubit<DownloadableProductsState> {
     _startListeningToDownloadStatus();
   }
 
-  Future<void> onPageOpened(List<Product> products) async {
-    await _showDownloadStatusFor(products);
+  Future<void> onPageOpened(
+    List<Product> products, {
+    bool preserveOrder = false,
+  }) async {
+    await _showDownloadStatusFor(products, preserveOrder: preserveOrder);
   }
 
   Future<void> onPageClosed() async {
@@ -158,6 +161,15 @@ class DownloadableProductsCubit extends Cubit<DownloadableProductsState> {
     downloadableProductsRepository.stopReceivingDownloadStatus();
   }
 
+  /// Applies a manual ordering (used by playlist drag-reorder). Clears any
+  /// active sort filter so the manual order isn't immediately re-sorted on the
+  /// next rebuild, then emits the new order for the UI.
+  void setOrder(List<Downloadable<Product>> ordered) {
+    filter = FilteringMode.none;
+    initialDownloadableProducts = ordered;
+    emit(DownloadableProductsLoadSuccess(ordered));
+  }
+
   void applyFilter(FilteringMode filter) {
     final currentState = state;
     if (currentState is DownloadableProductsLoadSuccess) {
@@ -167,13 +179,20 @@ class DownloadableProductsCubit extends Cubit<DownloadableProductsState> {
     }
   }
 
-  Future<void> _showDownloadStatusFor(List<Product> products) async {
+  Future<void> _showDownloadStatusFor(
+    List<Product> products, {
+    bool preserveOrder = false,
+  }) async {
     emit(const DownloadableProductsLoadInProgress());
     try {
       final downloadableProducts =
           await downloadableProductsRepository.getDownloadStatusFor(products);
       _retainKnownDownloadTaskIdsFor(downloadableProducts);
-      _sortByProductOrderTimeDescending(downloadableProducts);
+      // Playlists carry their own saved order (the server "entries" list), so
+      // we keep the incoming order instead of re-sorting by download time.
+      if (!preserveOrder) {
+        _sortByProductOrderTimeDescending(downloadableProducts);
+      }
       initialDownloadableProducts = downloadableProducts;
       emit(DownloadableProductsLoadSuccess(downloadableProducts));
     } on UserCanceledException catch (_) {

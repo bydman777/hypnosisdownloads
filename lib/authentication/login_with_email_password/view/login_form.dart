@@ -79,9 +79,8 @@ class _LoginFormState extends State<LoginForm> {
               ),
               const SizedBox(height: 16),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  const BodyMediumText('Remember me'),
                   DefaultSwitch(
                     value: _remember,
                     onToggle: (value) {
@@ -90,6 +89,8 @@ class _LoginFormState extends State<LoginForm> {
                       });
                     },
                   ),
+                  const SizedBox(width: 12),
+                  const BodyMediumText('Remember me'),
                 ],
               ),
             ],
@@ -155,24 +156,38 @@ class _EmailInput extends StatelessWidget {
   }
 }
 
-class _PasswordInput extends StatelessWidget {
+class _PasswordInput extends StatefulWidget {
   const _PasswordInput({Key? key, required this.controller}) : super(key: key);
 
   final TextEditingController controller;
+
+  @override
+  State<_PasswordInput> createState() => _PasswordInputState();
+}
+
+class _PasswordInputState extends State<_PasswordInput> {
+  bool _obscure = true;
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<LoginWithEmailPasswordCubit, AuthState>(
       listener: (context, state) {
         if (state is LoginSuccess) {
-          controller.clear();
+          widget.controller.clear();
         }
       },
       child: DefaultInputField(
         hintText: 'Password',
-        controller: controller,
-        obscureText: true,
+        controller: widget.controller,
+        obscureText: _obscure,
         autofillHints: const [AutofillHints.password],
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscure ? Icons.visibility_off : Icons.visibility,
+            color: ComponentColors.defaultIconColor,
+          ),
+          onPressed: () => setState(() => _obscure = !_obscure),
+        ),
       ),
     );
   }

@@ -70,7 +70,10 @@ class PlaylistsRepository {
           }
           final products =
               (await Future.wait(productFutures)).whereType<Product>().toList();
-          products.sort((a, b) => b.orderTime.compareTo(a.orderTime));
+          // Keep the server's `entries` order — that IS the user's saved
+          // (drag-reordered / sorted) playlist order. Re-sorting by orderTime
+          // here would discard it and revert to download-time order every time
+          // the playlist reloads.
           playlistJson['products'] =
               products.map((product) => product.toJson()).toList();
 
@@ -386,11 +389,14 @@ class PlaylistsRepository {
           "name": username,
           "pass": password,
           "id": playlist.id,
-          "entries": products
+          // Send a proper JSON array (e.g. ["1438773","1438769:HDPROB"]) rather
+          // than a Dart List.toString() ("[1438773, 1438769:HDPROB]"), which the
+          // backend can't decode — that produced error 7 "Can not decode
+          // entries." and silently dropped the new order.
+          "entries": jsonEncode(products
               .where((element) => element.idInPlaylist != null)
               .map((product) => product.idInPlaylist)
-              .toList()
-              .toString(),
+              .toList()),
         },
       );
 
@@ -405,13 +411,24 @@ class PlaylistsRepository {
       debugPrint("updatePlaylistEntry response: ${response.data}");
 
       final responseErrorCode = jsonDecode(response.data)['error'];
-      if (responseErrorCode > 0) {
+      // Error 6 is benign (matches deletePlaylist). Error 7 ("Can not decode
+      // entries.") is NOT tolerated here: for a reorder the entries ARE the
+      // payload, so a decode failure means the new order was dropped — surface
+      // it instead of silently pretending it saved.
+      if (responseErrorCode > 0 && responseErrorCode != 6) {
         throw Exception(jsonDecode(response.data)['errorstr']);
       } else if (responseErrorCode < 0) {
         throw Exception(responseErrorCode);
       }
 
-      return await _parsePlaylistFrom(response);
+      try {
+        return await _parsePlaylistFrom(response);
+      } catch (_) {
+        // A benign response can come back without a usable "entries" list;
+        // fall back to the order we just sent so callers still get a valid
+        // playlist instead of an error.
+        return playlist.copyWith(products: products);
+      }
     } catch (e) {
       return Future.error(e);
     }

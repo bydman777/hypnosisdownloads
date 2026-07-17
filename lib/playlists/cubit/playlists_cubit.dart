@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:error_handling/error_handling.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hypnosis_downloads/library/data/model/product.dart';
 import 'package:hypnosis_downloads/playlists/data/model/playlist.dart';
 import 'package:hypnosis_downloads/playlists/data/playlists_repository.dart';
 
@@ -52,6 +53,44 @@ class PlaylistsCubit extends Cubit<PlaylistsState> {
     );
     await playlistsRepository.writePlaylistToBox(updated);
     return updated;
+  }
+
+  /// Persists a new ordering of [reorderedProducts] for [playlist] to the
+  /// server (via the playlist "entries" list) and updates the local Hive
+  /// cache. Returns the server-parsed playlist. Does not emit — the playlist
+  /// view drives the visible order through DownloadableProductsCubit.
+  Future<Playlist> reorderPlaylist(
+    Playlist playlist,
+    List<Product> reorderedProducts,
+  ) async {
+    // Persist the exact order the user dragged rather than the server-parsed
+    // order: the parse round-trip can re-order entries, which would leave the
+    // cached (and therefore the played) order out of sync with what was shown.
+    final reordered = playlist.copyWith(products: reorderedProducts);
+
+    // Write locally FIRST (optimistic). Hive is a fast local write, so the new
+    // order is saved effectively synchronously — even if the user backs out of
+    // the playlist before the network round-trip finishes, the order survives.
+    // The server sync then runs independently (this cubit is app-scoped, so it
+    // isn't cancelled when the page is disposed).
+    await playlistsRepository.writePlaylistToBox(reordered);
+
+    final user = currentUserRepository.currentUser;
+    try {
+      await playlistsRepository.updatePlaylistEntry(
+        username: user.email,
+        password: user.accessToken,
+        playlist: playlist,
+        products: reorderedProducts,
+      );
+    } catch (e) {
+      // Server rejected the new order — undo the optimistic local write so the
+      // cache doesn't drift from the server (which would otherwise revert on
+      // the next getPlaylists anyway, but silently).
+      await playlistsRepository.writePlaylistToBox(playlist);
+      rethrow;
+    }
+    return reordered;
   }
 
   Future<void> delete(Playlist playlist) async {

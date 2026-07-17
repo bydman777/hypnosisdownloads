@@ -96,18 +96,28 @@ Future<void> pushPlayerPage(
   // pushed PlayerPage and loading the wrong track.
   if (type == DownloadProductType.audio) {
     NavigationService.currentAudio = downloadable.item;
+    NavigationService.selectionRevision.value++;
   }
   if (!context.mounted) return;
   if (type == DownloadProductType.audio) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) {
-      return PlayerPage(
-        downloadable: downloadable,
-        audioPack: productPack,
-        playlist: playlist,
-        navigatedByMiniPlayer: navigatedByMiniPlayer,
-      );
-    }));
-    if (!navigatedByMiniPlayer) {
+    if (navigatedByMiniPlayer) {
+      // From the mini player we stay on the current tab and push the full
+      // player as a normal route (back simply pops it).
+      Navigator.push(context, MaterialPageRoute(builder: (_) {
+        return PlayerPage(
+          downloadable: downloadable,
+          audioPack: productPack,
+          playlist: playlist,
+          navigatedByMiniPlayer: navigatedByMiniPlayer,
+        );
+      }));
+    } else {
+      // Tapping a title switches to the Listen tab, whose PlayerPageWrapper
+      // renders the visible player. We must NOT also push a PlayerPage onto
+      // the current tab's navigator: that stray route was previously discarded
+      // by the tab-reset side effect, taking the underlying playlist/pack
+      // detail page down with it (so Back landed on the tab's index instead of
+      // the detail the user came from).
       Provider.of<PageIndexProvider>(context, listen: false)
           .navigateToListenTab();
     }

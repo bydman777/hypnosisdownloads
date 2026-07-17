@@ -164,8 +164,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         child: Row(
           children: [
-            DefaultIconButton.largest(
+            DefaultIconButton(
               SvgPicture.asset(Assets.shortArrowLeft),
+              // 44pt minimum tap target (iOS HIG) so the back arrow is easy to
+              // hit near the top-left screen edge.
+              dimension: 44,
               onTap: () {
                 if (_backButtonBehaviour != null) {
                   _backButtonBehaviour?.call();
@@ -174,7 +177,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 }
               },
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Row(
                 mainAxisAlignment: _centerTitle
@@ -295,5 +298,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(40);
+  Size get preferredSize => const Size.fromHeight(44);
 }

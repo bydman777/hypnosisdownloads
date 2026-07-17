@@ -53,7 +53,9 @@ class AddToPlaylistView extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? DarkComponentColors.primaryCardColor
+                    : ComponentColors.primaryCardColor,
               ),
               child: Center(
                 child: Column(
@@ -175,9 +177,14 @@ class _AddToPlaylistListViewItemState extends State<AddToPlaylistListViewItem> {
                     builder: (context, Box<Playlist> box, _) {
                       final playlist =
                           box.get(widget.playlist.id) ?? widget.playlist;
-                      bool isAlreadyAdded = playlist.products
-                          .map((e) => e.id)
-                          .contains(widget.audio.id);
+                      // Match on id OR idInPlaylist so the tick shows even when
+                      // the server-resolved product carries a different local
+                      // id than the tapped audio (the root cause of the missing
+                      // tick when adding a 2nd item on iOS).
+                      final isAlreadyAdded = playlist.products.any((p) =>
+                          p.id == widget.audio.id ||
+                          (p.idInPlaylist != null &&
+                              p.idInPlaylist == widget.audio.idInPlaylist));
 
                       if (isAlreadyAdded) {
                         return SvgPicture.asset(

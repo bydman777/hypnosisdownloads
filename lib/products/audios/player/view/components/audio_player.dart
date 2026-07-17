@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hypnosis_downloads/app/connectivity_status/logic/connectivity_status_cubit.dart';
 import 'package:hypnosis_downloads/app/home/routes/navigation_service.dart';
 import 'package:hypnosis_downloads/app/view/common/assets.dart';
@@ -40,10 +41,31 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final currentAudio = context.hypnosisAudioPlayer.currentAudio;
-      final widgetAudio = widget.audio;
-      if (currentAudio?.id != widgetAudio.id) {
+    super.initState();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _loadSourceIfNeeded());
+  }
+
+  @override
+  void didUpdateWidget(covariant AudioPlayerWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A different track was explicitly selected while this widget stayed alive
+    // (e.g. tapping another item while one is playing). initState does not run
+    // again for a persisted widget, so trigger the reload here. Auto-advance is
+    // skipped: by the time its rebuild arrives the player is already on the new
+    // track, so there is nothing to load and no need to flash the loading state.
+    if (oldWidget.audio.id != widget.audio.id &&
+        context.hypnosisAudioPlayer.currentAudio?.id != widget.audio.id) {
+      if (mounted) setState(() => loading = true);
+      _loadSourceIfNeeded();
+    }
+  }
+
+  Future<void> _loadSourceIfNeeded() async {
+    if (!mounted) return;
+    final currentAudio = context.hypnosisAudioPlayer.currentAudio;
+    final widgetAudio = widget.audio;
+    if (currentAudio?.id != widgetAudio.id) {
         // If we are offline and the target track isn't downloaded, don't
         // pretend to play it — show a clear message instead of leaving the
         // player stuck at 0:00.
@@ -70,6 +92,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           }
         }
         await context.hypnosisAudioPlayer.stop();
+        if (!mounted) return;
 
         setState(() {
           loading = false;
@@ -91,8 +114,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
             }
           });
         } else if (widget.playlist != null) {
+          // Resolve the freshest playlist order from the Hive box: the one
+          // handed down through the widget tree can be stale after a
+          // drag-reorder / Sort-by, which would queue the old order.
+          final freshPlaylist =
+              Hive.box<Playlist>('playlists').get(widget.playlist!.id) ??
+                  widget.playlist!;
           await context.hypnosisAudioPlayer.setPlaylistAudioSource(
-              widget.playlist!,
+              freshPlaylist,
               initialProduct: widget.audio,
               useOfflineLinkIfAvailable: (product) async {
             final context = NavigationService.navigatorKey.currentContext!;
@@ -108,13 +137,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           });
         }
       } else {
-        setState(() {
-          loading = false;
-        });
+        if (mounted) {
+          setState(() {
+            loading = false;
+          });
+        }
       }
-    });
-
-    super.initState();
   }
 
   @override
